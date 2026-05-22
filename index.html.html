@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Edisur · Cesiones</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#F5F2EE;--surface:#fff;--border:#E0D9D0;--accent:#1A3A2A;--accent-light:#2D5C42;
+  --gold:#B8924A;--text:#1C1C1C;--muted:#7A7166;--error:#C0392B;
+  --warn-bg:#FEF9F0;--warn-border:#E8D5A3;--warn-text:#7A5F1A;
+  --alert-bg:#FDF0EF;--alert-border:#E8C4C1;
+  --ok-bg:#F0FAF4;--ok-border:#A8D5B5;--ok-text:#1A5C32;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--accent);padding:16px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.logo-text{font-family:'Playfair Display',serif;color:#fff;font-size:20px;white-space:nowrap}
+.logo-divider{width:1px;height:22px;background:rgba(255,255,255,0.3);flex-shrink:0}
+.logo-sub{color:rgba(255,255,255,0.6);font-size:12px;font-weight:300;letter-spacing:1.2px;text-transform:uppercase}
+.tabs-bar{background:var(--accent);padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.tabs-bar::-webkit-scrollbar{display:none}
+.tab{padding:12px 20px;font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;font-family:'DM Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none}
+.tab:hover{color:rgba(255,255,255,0.85)}
+.tab.active{color:#fff;border-bottom-color:var(--gold)}
+.tab-coming{opacity:.4;cursor:default;font-style:italic}
+.container{max-width:900px;margin:0 auto;padding:28px 16px 80px}
+.steps{display:flex;align-items:center;margin-bottom:32px}
+.step{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;transition:all .3s;background:#D4CEC7;color:#fff}
+.step.active .step-num{background:var(--accent)}
+.step.done .step-num{background:var(--gold)}
+.step-label{font-size:12px;color:var(--muted);transition:color .3s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step.active .step-label{color:var(--accent);font-weight:500}
+.step.done .step-label{color:var(--gold)}
+.step-line{flex:0 0 16px;height:1px;background:var(--border);margin:0 6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 24px;margin-bottom:16px}
+.card-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent);margin-bottom:6px}
+.card-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.section-label{font-size:12px;font-weight:500;color:var(--accent);margin-bottom:8px;margin-top:18px;text-transform:uppercase;letter-spacing:.5px}
+textarea,input[type=text],input[type=date]{width:100%;border:1px solid var(--border);border-radius:8px;padding:13px;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;color:var(--text);background:var(--bg);resize:vertical;transition:border-color .2s;outline:none}
+textarea:focus,input[type=text]:focus,input[type=date]:focus{border-color:var(--accent-light)}
+textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
+textarea{min-height:140px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 22px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent-light)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn-secondary:hover:not(:disabled){background:var(--accent);color:#fff}
+.btn-secondary:disabled{opacity:.5;cursor:not-allowed}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover:not(:disabled){background:#a07a3a}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:8px 14px;font-size:13px}
+.btn-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;align-items:center}
+.loading{display:none;align-items:center;gap:10px;padding:16px 0;color:var(--muted);font-size:14px}
+.loading.visible{display:flex}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.output-block{display:none}
+.output-block.visible{display:block}
+.output-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.output-content{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:13px;line-height:1.8;white-space:pre-wrap;font-family:'DM Sans',sans-serif;color:var(--text);max-height:420px;overflow-y:auto}
+.copy-feedback{font-size:12px;color:var(--gold);margin-top:8px;height:16px}
+.error-msg{display:none;background:var(--alert-bg);border:1px solid var(--alert-border);border-radius:8px;padding:13px 16px;font-size:13px;color:var(--error);margin-top:14px;line-height:1.5}
+.error-msg.visible{display:block}
+.alert{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:13px 16px;font-size:13px;color:var(--warn-text);margin-bottom:20px;line-height:1.6}
+.val-header{display:flex;align-items:center;gap:10px;padding:13px 16px;font-size:14px;font-weight:500;border-radius:10px}
+.val-header-ok{background:var(--ok-bg);color:var(--ok-text);border:1px solid var(--ok-border)}
+.val-header-issues{background:var(--alert-bg);color:var(--error);border:1px solid var(--alert-border);border-radius:10px 10px 0 0}
+.val-header-warns{background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-border);border-radius:10px 10px 0 0}
+.val-body{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;background:var(--surface)}
+.val-item{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5}
+.val-item:last-child{border-bottom:none}
+.val-icon{flex-shrink:0}
+.upload-area{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-area:hover,.upload-area.dragover{border-color:var(--accent-light);background:#EEF2EE}
+.upload-icon-big{font-size:26px;margin-bottom:6px}
+.upload-text{font-size:13px;color:var(--muted);line-height:1.5}
+.upload-text strong{color:var(--accent)}
+#fileInput,#plantillaInput{display:none}
+.file-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.file-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px}
+.file-name{display:flex;align-items:center;gap:6px;color:var(--text)}
+.file-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 4px;line-height:1}
+.file-remove:hover{color:var(--error)}
+.file-type-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;margin-left:6px}
+.badge-pdf{background:#FDF0EF;color:var(--error)}
+.badge-docx{background:#EFF6FF;color:#1D4ED8}
+#contractEditor{width:100%;border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.8;color:var(--text);background:var(--bg);resize:vertical;min-height:500px;outline:none}
+#contractEditor:focus{border-color:var(--accent-light)}
+/* CLAUSES */
+.clauses-list{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.clause-block{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+.clause-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.clause-title{font-size:13px;font-weight:500;color:var(--accent)}
+.clause-toggle{font-size:12px;color:var(--muted);transition:transform .2s}
+.clause-body{padding:14px 16px}
+.clause-body.collapsed{display:none}
+.clause-extra{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--bg);resize:vertical;min-height:70px;outline:none;color:var(--text)}
+.clause-extra:focus{border-color:var(--accent-light)}
+.clause-extra::placeholder{color:var(--muted)}
+.clause-label-small{font-size:11px;color:var(--muted);margin-bottom:6px;display:block}
+.new-clause-block{border:1px dashed var(--gold);border-radius:10px;padding:16px;background:#FEFAF4}
+.new-clause-title-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fff;outline:none;color:var(--text);margin-bottom:8px}
+.new-clause-title-input:focus{border-color:var(--gold)}
+.add-clause-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--gold);border-radius:8px;color:var(--gold);font-size:13px;font-weight:500;padding:10px 16px;cursor:pointer;width:100%;justify-content:center;margin-top:8px;font-family:'DM Sans',sans-serif;transition:all .2s}
+.add-clause-btn:hover{background:#FEF9F0}
+.remove-clause-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px}
+.remove-clause-btn:hover{color:var(--error)}
+/* FIRMAS */
+#firmas-panel{display:none}
+.firmas-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:600px){.firmas-form{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:500;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.form-group input{border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:var(--accent-light)}
+.form-group input::placeholder{color:var(--muted)}
+.firmas-filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+.filter-group{display:flex;flex-direction:column;gap:5px;min-width:120px}
+.filter-group label{font-size:11px;font-weight:500;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.filter-group input,.filter-group select{border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--accent-light)}
+.firmas-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
+thead tr{background:var(--accent);color:#fff}
+thead th{padding:11px 14px;text-align:left;font-weight:500;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#F9F6F2}
+tbody td{padding:10px 14px;color:var(--text);vertical-align:middle}
+.td-obs{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-style:italic;font-size:12px}
+.btn-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;transition:color .2s}
+.btn-del:hover{color:var(--error)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.firmas-count{font-size:13px;color:var(--muted);margin-bottom:14px}
+.success-msg{display:none;background:var(--ok-bg);border:1px solid var(--ok-border);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--ok-text);margin-top:12px}
+.success-msg.visible{display:block}
+@media(max-width:600px){header{padding:14px 16px}.logo-sub{display:none}.tab{padding:10px 14px;font-size:12px}.card{padding:20px 16px}.card-title{font-size:18px}.container{padding:20px 12px 60px}.btn{padding:11px 16px;font-size:13px}.step-label{font-size:11px}}
+
+/* API KEY MODAL */
+.apikey-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}
+.apikey-modal{background:var(--surface);border-radius:12px;padding:32px 28px;width:100%;max-width:440px}
+.apikey-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent);margin-bottom:8px}
+.apikey-desc{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.apikey-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);outline:none;margin-bottom:8px}
+.apikey-input:focus{border-color:var(--accent-light)}
+.apikey-note{font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.apikey-error{font-size:13px;color:var(--error);margin-bottom:12px;display:none}
+.apikey-error.visible{display:block}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo-text">Edisur</span>
+  <div class="logo-divider"></div>
+  <span class="logo-sub">Gestor de Cesiones</span>
+</header>
+<div class="tabs-bar">
+  <button class="tab active" id="tab-cesion" onclick="switchMainTab('cesion',this)">Lote Baldío</button>
+  <button class="tab tab-coming" disabled>Dúplex</button>
+  <button class="tab tab-coming" disabled>% del Lote</button>
+  <button class="tab tab-coming" disabled>Housing</button>
+  <button class="tab" id="tab-firmas" onclick="switchMainTab('firmas',this)">📋 Firmas efectivas</button>
+</div>
+<div class="container">
+  <div class="steps" id="steps-bar">
+    <div class="step active" id="si1"><div class="step-num">1</div><span class="step-label">Datos y validación</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="si2"><div class="step-num">2</div><span class="step-label">Revisar cláusulas</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="si3"><div class="step-num">3</div><span class="step-label">Contrato final</span></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-title">Datos del cliente</div>
+      <div class="card-desc">Subí la plantilla completada por el cliente (Word o PDF), pegá el texto directamente, o adjuntá los PDFs de antecedentes.</div>
+
+      <div class="section-label">Plantilla del cliente <span style="font-weight:300;color:var(--muted)">(Word o PDF)</span></div>
+      <div class="upload-area" id="uploadPlantilla" onclick="document.getElementById('plantillaInput').click()">
+        <div class="upload-icon-big">📋</div>
+        <div class="upload-text"><strong>Tocá o arrastrá</strong> la plantilla acá<br>
+          <span class="file-type-badge badge-pdf">PDF</span>
+          <span class="file-type-badge badge-docx">Word (.docx)</span>
+        </div>
+      </div>
+      <input type="file" id="plantillaInput" accept=".pdf,.doc,.docx">
+      <div class="file-list" id="plantillaList"></div>
+
+      <div class="section-label" style="margin-top:16px">O pegá el texto directamente <span style="font-weight:300;color:var(--muted)">(opcional si ya subiste la plantilla)</span></div>
+      <textarea id="clientData" placeholder="Pegá acá el texto del Word del cliente..."></textarea>
+
+      <div class="section-label" style="margin-top:16px">Antecedentes en PDF <span style="font-weight:300;color:var(--muted)">(opcional)</span></div>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon-big">📄</div>
+        <div class="upload-text"><strong>Tocá o arrastrá</strong> los PDFs acá<br>Boleto de compraventa y/o cesiones previas</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf" multiple>
+      <div class="file-list" id="fileList"></div>
+
+      <div class="loading" id="loading1"><div class="spinner"></div><span id="loading1-text">Procesando...</span></div>
+      <div class="error-msg" id="error1"></div>
+      <div class="btn-actions">
+        <button class="btn btn-primary" onclick="processStep1()">Extraer y validar datos</button>
+      </div>
+    </div>
+    <div class="output-block" id="val-block">
+      <div class="card">
+        <div class="output-label">Resultado de validación</div>
+        <div id="val-panel"></div>
+      </div>
+    </div>
+    <div class="output-block" id="output1-block">
+      <div class="card">
+        <div class="output-label">Datos extraídos</div>
+        <div class="output-content" id="output1-content"></div>
+        <div class="copy-feedback" id="copy1-feedback"></div>
+        <div class="btn-actions">
+          <button class="btn btn-secondary btn-sm" onclick="copyOutput('output1-content','copy1-feedback')">Copiar datos</button>
+          <button class="btn btn-gold" id="btnStep2" onclick="goToStep2()">Revisar cláusulas →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" style="display:none">
+    <div class="card">
+      <div class="card-title">Revisión de cláusulas</div>
+      <div class="card-desc">Expandí cada cláusula para agregar texto extra si lo necesitás. También podés agregar cláusulas nuevas al final.</div>
+      <div class="clauses-list" id="clausesList"></div>
+      <button class="add-clause-btn" onclick="addNewClause()">+ Agregar nueva cláusula</button>
+      <div class="btn-actions">
+        <button class="btn btn-secondary" onclick="goBackStep1()">← Volver</button>
+        <button class="btn btn-gold" onclick="goToStep3()">Generar contrato final →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" style="display:none">
+    <div class="card">
+      <div class="card-title">Contrato final</div>
+      <div class="card-desc">Revisá y editá el contrato antes de descargar.</div>
+      <div class="alert">⚠️ Verificá: antecedentes, precio, estado civil y asignación correcta de partes antes de descargar.</div>
+      <textarea id="contractEditor" spellcheck="true"></textarea>
+      <div class="copy-feedback" id="copy2-feedback"></div>
+      <div class="btn-actions">
+        <button class="btn btn-secondary" onclick="goBackStep2()">← Volver</button>
+        <button class="btn btn-secondary btn-sm" onclick="copyContract()">Copiar texto</button>
+        <button class="btn btn-gold" onclick="downloadDocx()">⬇ Descargar Word</button>
+        <button class="btn btn-primary" onclick="resetAll()">Nueva cesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIRMAS PANEL -->
+  <div id="firmas-panel" style="display:none">
+    <div class="card">
+      <div class="card-title">Registrar firma efectiva</div>
+      <div class="card-desc">Completá los datos de cada firma realizada para llevar el registro.</div>
+      <div class="firmas-form">
+        <div class="form-group"><label>Emprendimiento</label><input type="text" id="f-emprendimiento" placeholder="Ej: Manantiales Norte"></div>
+        <div class="form-group"><label>Manzana</label><input type="text" id="f-manzana" placeholder="Ej: 12"></div>
+        <div class="form-group"><label>Lote</label><input type="text" id="f-lote" placeholder="Ej: 5"></div>
+        <div class="form-group"><label>Fecha de firma</label><input type="date" id="f-fecha"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Parte cedente</label><input type="text" id="f-cedente" placeholder="Nombre completo del cedente"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Parte cesionaria</label><input type="text" id="f-cesionario" placeholder="Nombre completo del cesionario"></div>
+        <div class="form-group"><label>Precio cobro servicio</label><input type="text" id="f-precio-serv" placeholder="Ej: $50.000"></div>
+        <div class="form-group"><label>Precio certificación de firmas</label><input type="text" id="f-precio-cert" placeholder="Ej: $30.000"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Escribano interviniente</label><input type="text" id="f-escribano" placeholder="Nombre del escribano"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Observaciones</label><input type="text" id="f-obs" placeholder="Notas u observaciones (opcional)"></div>
+      </div>
+      <div class="success-msg" id="firmas-success">✓ Firma registrada correctamente.</div>
+      <div class="btn-actions">
+        <button class="btn btn-primary" onclick="addFirma()">Registrar firma</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Firmas registradas</div>
+      <div class="firmas-filters">
+        <div class="filter-group"><label>Emprendimiento</label><input type="text" id="filter-emp" placeholder="Filtrar..." oninput="renderFirmas()"></div>
+        <div class="filter-group"><label>Mes</label>
+          <select id="filter-mes" onchange="renderFirmas()">
+            <option value="">Todos</option>
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="filter-group"><label>Año</label><select id="filter-anio" onchange="renderFirmas()"><option value="">Todos</option></select></div>
+        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">Limpiar filtros</button>
+      </div>
+      <div class="firmas-count" id="firmas-count"></div>
+      <div class="btn-actions" style="margin-top:0;margin-bottom:16px">
+        <button class="btn btn-gold btn-sm" onclick="exportExcel()">⬇ Descargar Excel</button>
+      </div>
+      <div class="firmas-table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Fecha</th><th>Emprendimiento</th><th>Manzana</th><th>Lote</th>
+            <th>Cedente</th><th>Cesionario</th><th>Precio servicio</th><th>Precio certif.</th>
+            <th>Escribano</th><th>Observaciones</th><th></th>
+          </tr></thead>
+          <tbody id="firmas-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<!-- API KEY MODAL -->
+<div class="apikey-overlay" id="apikey-overlay">
+  <div class="apikey-modal">
+    <div class="apikey-title">Bienvenida a Edisur Cesiones</div>
+    <div class="apikey-desc">Para usar la app necesitás ingresar tu API Key de Anthropic. Se usa solo en esta sesión y no se guarda en ningún lado.</div>
+    <input type="password" class="apikey-input" id="apikey-input" placeholder="sk-ant-..." autocomplete="off">
+    <div class="apikey-note">Encontrás tu API Key en <strong>console.anthropic.com</strong> → API Keys. Si no tenés una, pedísela a quien administra la cuenta.</div>
+    <div class="apikey-error" id="apikey-error">API Key inválida o sin crédito. Verificá e intentá de nuevo.</div>
+    <div class="btn-actions" style="margin-top:0">
+      <button class="btn btn-primary" onclick="saveApiKey()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<script>
+// ─── File handling ────────────────────────────────────────────────
+const uploadedFiles = [];
+let plantillaFile = null;
+let extractedData = '';
+
+// Antecedentes PDFs
+document.getElementById('fileInput').addEventListener('change', e => {
+  [...e.target.files].forEach(addFile); e.target.value='';
+});
+const ua = document.getElementById('uploadArea');
+ua.addEventListener('dragover', e=>{e.preventDefault();ua.classList.add('dragover')});
+ua.addEventListener('dragleave', ()=>ua.classList.remove('dragover'));
+ua.addEventListener('drop', e=>{
+  e.preventDefault();ua.classList.remove('dragover');
+  [...e.dataTransfer.files].filter(f=>f.type==='application/pdf').forEach(addFile);
+});
+function addFile(file){if(uploadedFiles.find(f=>f.name===file.name))return;uploadedFiles.push(file);renderFileList();}
+function removeFile(name){const i=uploadedFiles.findIndex(f=>f.name===name);if(i!==-1)uploadedFiles.splice(i,1);renderFileList();}
+function renderFileList(){
+  document.getElementById('fileList').innerHTML=uploadedFiles.map(f=>`
+    <div class="file-item"><div class="file-name">📄 ${f.name}</div>
+    <button class="file-remove" onclick="removeFile('${f.name}')">✕</button></div>`).join('');
+}
+
+// Plantilla file (PDF or Word)
+document.getElementById('plantillaInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(file){plantillaFile=file;renderPlantillaFile();}
+  e.target.value='';
+});
+const upa = document.getElementById('uploadPlantilla');
+upa.addEventListener('dragover', e=>{e.preventDefault();upa.classList.add('dragover')});
+upa.addEventListener('dragleave', ()=>upa.classList.remove('dragover'));
+upa.addEventListener('drop', e=>{
+  e.preventDefault();upa.classList.remove('dragover');
+  const file=e.dataTransfer.files[0];
+  if(file&&(file.type==='application/pdf'||file.name.match(/\.docx?$/i))){plantillaFile=file;renderPlantillaFile();}
+});
+function renderPlantillaFile(){
+  const list=document.getElementById('plantillaList');
+  if(!plantillaFile){list.innerHTML='';return;}
+  const isPdf=plantillaFile.type==='application/pdf';
+  list.innerHTML=`<div class="file-item">
+    <div class="file-name">${isPdf?'📄':'📝'} ${plantillaFile.name}
+    <span class="file-type-badge ${isPdf?'badge-pdf':'badge-docx'}">${isPdf?'PDF':'Word'}</span></div>
+    <button class="file-remove" onclick="removePlantilla()">✕</button></div>`;
+}
+function removePlantilla(){plantillaFile=null;renderPlantillaFile();document.getElementById('plantillaInput').value='';}
+
+async function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=()=>rej(new Error('Error leyendo archivo'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function plantillaToContent(){
+  if(!plantillaFile)return null;
+  const b64=await fileToBase64(plantillaFile);
+  const isPdf=plantillaFile.type==='application/pdf';
+  const mediaType=isPdf?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  return{type:'document',source:{type:'base64',media_type:mediaType,data:b64}};
+}
+
+// ─── Claude API ───────────────────────────────────────────────────
+let _apiKey = '';
+
+function saveApiKey(){
+  const key = document.getElementById('apikey-input').value.trim();
+  if(!key || !key.startsWith('sk-')){
+    document.getElementById('apikey-error').classList.add('visible');return;
+  }
+  _apiKey = key;
+  document.getElementById('apikey-overlay').style.display = 'none';
+}
+
+document.getElementById('apikey-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter') saveApiKey();
+});
+
+async function callClaude(messages,maxTokens=2000){
+  if(!_apiKey){
+    document.getElementById('apikey-overlay').style.display = 'flex';
+    throw new Error('Ingresá tu API Key para continuar.');
+  }
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': _apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,messages})
+  });
+  if(!r.ok){
+    if(r.status===401){
+      _apiKey='';
+      document.getElementById('apikey-error').classList.add('visible');
+      document.getElementById('apikey-overlay').style.display='flex';
+    }
+    throw new Error('Error al conectar con Claude. Intentá de nuevo.');
+  }
+  const d=await r.json();
+  return d.content.map(b=>b.text||'').join('');
+}
+
+// ─── Prompts ──────────────────────────────────────────────────────
+const EXTRACTION_PROMPT=`Sos un asistente legal de Soledad, abogada del área Legales de Grupo Edisur, especializada en contratos de cesión entre terceros.
+
+Extraé y organizá los datos del texto o documento provisto. No inventes datos. Si un dato no figura, escribí NO INFORMADO.
+IMPORTANTE: prestá máxima atención a qué datos pertenecen al CEDENTE (quien vende/cede) y cuáles al CESIONARIO (quien compra/recibe). No cruces datos entre partes.
+
+Datos del CEDENTE (quien cede):
+- Nombre completo:
+- DNI:
+- CUIT:
+- Fecha de nacimiento:
+- Nacionalidad:
+- Estado civil:
+- ¿Estaba casado/a cuando adquirió el bien? (SÍ/NO/NO INFORMADO):
+- Nombre completo del cónyuge actual (si aplica):
+- DNI del cónyuge actual (si aplica):
+- Sentencia de divorcio recibida (si aplica): SÍ / NO
+- División de bienes recibida (si aplica): SÍ / NO
+- Domicilio:
+- Teléfono:
+- Mail:
+- Persona Expuesta Políticamente: SÍ / NO
+- Interviene apoderado: SÍ / NO
+
+Datos del CESIONARIO (quien recibe):
+- Nombre completo:
+- DNI:
+- CUIT:
+- Fecha de nacimiento:
+- Nacionalidad:
+- Estado civil:
+- Nombre completo del cónyuge (si aplica):
+- DNI del cónyuge (si aplica):
+- Domicilio:
+- Teléfono:
+- Mail:
+- Persona Expuesta Políticamente: SÍ / NO
+- Interviene apoderado: SÍ / NO
+
+Datos de la operación:
+- Emprendimiento:
+- Número de manzana:
+- Número de lote:
+- Metros cuadrados del lote (en letras y en números):
+- Precio de la cesión:
+- Forma de pago:
+- Quién otorga la tenencia (la Cedente / la Sociedad Titular):
+
+Antecedentes:
+- Fecha de firma del boleto original:
+- Razón social y CUIT de la parte vendedora original:
+- Nombre, apellido, DNI y estado civil del comprador original:
+- Cesiones previas (listarlas en orden cronológico si las hay):
+
+`;
+
+const VALIDATION_PROMPT=`Sos un asistente legal de Soledad, abogada de Grupo Edisur. Analizá los datos extraídos y detectá problemas.
+Devolvé ÚNICAMENTE un JSON válido con esta estructura, sin texto adicional:
+{"errores":["..."],"advertencias":["..."]}
+ERRORES: Nombre, DNI, CUIT, fecha de nacimiento, domicilio, mail o teléfono con valor NO INFORMADO para cualquier parte. Estado civil casado/a pero sin datos del cónyuge. Precio informado pero forma de pago NO INFORMADO o viceversa. Mismo DNI para ambas partes. Emprendimiento, manzana, lote o metros cuadrados NO INFORMADO.
+ADVERTENCIAS: Cedente casado/a y campo adquisición siendo casado NO INFORMADO. Antecedentes incompletos. Apoderado SÍ sin mención de poder. PEP SÍ en alguna parte.
+Si no hay errores: "errores":[]. Si no hay advertencias: "advertencias":[].
+Datos:
+`;
+
+const CONTRACT_PROMPT=`Sos un asistente legal de Soledad, abogada de Grupo Edisur. Completá el contrato con los datos provistos.
+REGLAS: Reemplazá cada variable entre corchetes. Si dice NO INFORMADO, dejá el campo entre corchetes. No cambies la redacción. Ajustá género. Si el CEDENTE estaba casado cuando adquirió (campo SÍ), agregá antes de la fecha:
+"DÉCIMO: ASENTIMIENTO CONYUGAL
+Presente en este acto [NOMBRE CÓNYUGE], D.N.I. Nº [DNI CÓNYUGE], en calidad de cónyuge de [NOMBRE CEDENTE], D.N.I. Nº [DNI CEDENTE], viene por la presente a prestar conformidad para con la operación que por este acto se instrumenta y como prueba de conformidad suscribe el presente contrato de cesión de derechos y acciones."
+Si ese campo es NO o NO INFORMADO, no agregues esa cláusula. Devolvé ÚNICAMENTE el contrato completo.
+
+MODELO:
+CONTRATO DE CESION DE DERECHOS Y ACCIONES
+MANZANA [NUMERO DE MANZANA] – LOTE [NUMERO DE LOTE] – [EMPRENDIMIENTO]
+Entre [NOMBRE CEDENTE], D.N.I. Nº [DNI CEDENTE], CUIT Nº [CUIT CEDENTE], de nacionalidad argentina, con fecha de nacimiento el día [FECHA NAC CEDENTE], de estado civil [ESTADO CIVIL CEDENTE], con domicilio en [DOMICILIO CEDENTE], celular [TEL CEDENTE], domicilio electrónico [MAIL CEDENTE], en adelante llamado/a LA CEDENTE; y por el otro lado, [NOMBRE CESIONARIO], D.N.I. Nº [DNI CESIONARIO], CUIT Nº [CUIT CESIONARIO], de nacionalidad argentina, con fecha de nacimiento el día [FECHA NAC CESIONARIO], de estado civil [ESTADO CIVIL CESIONARIO], con domicilio en [DOMICILIO CESIONARIO], celular [TEL CESIONARIO], domicilio electrónico [MAIL CESIONARIO], en lo sucesivo llamado/a LA CESIONARIA, se conviene formalizar el presente CONTRATO DE CESION DE DERECHOS Y ACCIONES de conformidad a los siguientes términos:
+
+PRIMERO: ANTECEDENTES
+1.1. A [FECHA FIRMA BOLETO ORIGINAL], [RAZON SOCIAL Y CUIT VENDEDORA ORIGINAL], por un lado en calidad de Vendedora, y por el otro [NOMBRE, APELLIDO, DNI Y ESTADO CIVIL COMPRADOR ORIGINAL], en calidad de Compradora, suscribieron BOLETO DE COMPRAVENTA sobre 1) UN LOTE DE TERRENO que se designa como Lote Nº [NUMERO LOTE] de la Manzana [NUMERO MANZANA] de la urbanización designada como [EMPRENDIMIENTO], de esta ciudad de Córdoba, con una superficie aproximada de [METROS CUADRADOS EN LETRAS Y NUMEROS] y, 2) DOS (2) acciones clase "A" de la sociedad o Asociación Civil bajo la forma de Sociedad Anónima que tendrá a su cargo la administración de la Urbanización [EMPRENDIMIENTO] y demás urbanizaciones que LA VENDEDORA decida incorporar a futuro.
+1.2. Es intención de la aquí CEDENTE, ceder a favor de la CESIONARIA, todos los derechos, acciones y obligaciones que tiene, le corresponden y/o pudieren corresponderle sobre el inmueble mencionado ut supra.
+
+SEGUNDO: OBJETO
+2.1. La CEDENTE cede y transfiere a favor de LA CESIONARIA, y esta acepta, los derechos, acciones y obligaciones que tiene y le corresponden emergentes del Boleto de Compraventa, relacionados con el inmueble que se detalla como 1) UN LOTE DE TERRENO que se designa como LOTE Nº [NUMERO LOTE] DE LA MANZANA [NUMERO MANZANA] de la urbanización designada como [EMPRENDIMIENTO], de esta ciudad de Córdoba, con una superficie aproximada de [METROS CUADRADOS EN LETRAS Y NUMEROS] y, 2) DOS (2) acciones clase "A" de la sociedad o Asociación Civil bajo la forma de Sociedad Anónima que tendrá a su cargo la administración de la Urbanización [EMPRENDIMIENTO] y demás urbanizaciones que LA VENDEDORA decida incorporar a futuro.
+2.2. La CESIONARIA declara aceptar la cesión en los términos expresados, y conocer la validez y alcance de los derechos cedidos.
+
+TERCERO: PRECIO
+3.1. Precio. El precio de esta operación se establece en la suma de [PRECIO CESION].
+3.2. Forma de Pago: El precio indicado será abonado por LA CESIONARIA a LA CEDENTE en este acto, [FORMA DE PAGO]. El presente documento servirá como formal recibo y carta de pago.
+
+CUARTO: DECLARACIONES
+4.1. La CEDENTE declara que cede todos los derechos, acciones y obligaciones que tiene y le corresponden.
+4.2. La CEDENTE declara que los derechos que cede, así como las acciones que pudieran derivar del mismo, son legítimos conforme a su documentación respaldatoria que se acompaña y que es entregada en este acto como Anexo I (Boleto de compraventa).
+4.3. La parte CEDENTE declara no encontrarse inhibido, ni incapacitado. Asimismo, se adjunta informe de inhibiciones del cual surge que no constan inhibiciones en la provincia de Córdoba a nombre de la parte cedente.
+4.4. La CESIONARIA se subroga en todos los derechos, acciones y obligaciones de la CEDENTE, estipulados en el contrato que forma parte de este como Anexo I (Boleto de Compraventa).
+
+QUINTO: ESCRITURACIÓN
+La escritura traslativa de dominio del inmueble será otorgada directamente por la titular de dominio a favor de LA CESIONARIA, la que será labrada por el Escribano que designe la Sociedad titular de dominio, siendo a cargo exclusivo de LA CESIONARIA, todos los gastos y honorarios que ella demanda, como así también el pago de los gastos y sellado de la presente cesión.
+
+SEXTO: TENENCIA
+La tenencia del Lote objeto de la presente es entregada por [QUIEN OTORGA LA TENENCIA] a LA CESIONARIA en este mismo acto, libre de personas, ocupantes y cosas.
+
+SÉPTIMO: IMPUESTOS. GASTOS
+Todos los impuestos, tasas, expensas, servicios y contribuciones especiales que graven el inmueble sean de orden nacional, provincial y/o municipal son a cargo de la CEDENTE hasta el día de la fecha del presente, y desde hoy, a cargo de la CESIONARIA.
+
+OCTAVO: PERSONAS EXPUESTAS POLÍTICAMENTE
+Las Partes declaran bajo fe de juramento NO revestir el carácter de Personas Expuestas Políticamente, en los términos de la Resolución 192/2024 de la UIF, habiendo leído el listado integral relacionado en la misma, y además NO se encuentran incluidos en la nómina proporcionada por UIF, de personas vinculadas al lavado de activos y financiación del terrorismo.
+
+NOVENO: DOMICILIOS. JURISDICCIÓN
+9.1. A todos los efectos del presente, las Partes constituyen domicilio en los indicados en el encabezamiento. Los domicilios constituidos podrán ser sustituidos por otros dentro de la misma localidad, mediante notificación practicada por telegrama colacionado o cualquier otro medio fehaciente.
+9.2. Las Partes se someten expresamente a la jurisdicción de los Tribunales Ordinarios de la ciudad de Córdoba, renunciando expresamente a todo otro fuero o jurisdicción que les pudiere corresponder en virtud de normas legales vigentes o futuras.
+
+Leído, ratificado y conformes las partes, se firman tres (3) ejemplares del mismo tenor y a un solo efecto en Calle Pública – Cañada Sur 3851, Manantiales, ciudad de Córdoba, a los [FECHA DE FIRMA].
+
+DATOS PROVISTOS:
+`;
+
+// ─── Clauses ──────────────────────────────────────────────────────
+const CLAUSES=[
+  {id:'primero',title:'PRIMERO: Antecedentes',key:'antecedentes'},
+  {id:'segundo',title:'SEGUNDO: Objeto',key:'objeto'},
+  {id:'tercero',title:'TERCERO: Precio',key:'precio'},
+  {id:'cuarto',title:'CUARTO: Declaraciones',key:'declaraciones'},
+  {id:'quinto',title:'QUINTO: Escrituración',key:'escrituracion'},
+  {id:'sexto',title:'SEXTO: Tenencia',key:'tenencia'},
+  {id:'septimo',title:'SÉPTIMO: Impuestos y Gastos',key:'impuestos'},
+  {id:'octavo',title:'OCTAVO: Personas Expuestas Políticas',key:'pep'},
+  {id:'noveno',title:'NOVENO: Domicilios y Jurisdicción',key:'domicilios'},
+];
+let newClauses=[];let clauseCounter=0;
+
+// ─── Step 1 ───────────────────────────────────────────────────────
+async function processStep1(){
+  const clientData=document.getElementById('clientData').value.trim();
+  if(!clientData&&uploadedFiles.length===0&&!plantillaFile){
+    showError('error1','Subí la plantilla del cliente, pegá el texto o adjuntá un PDF de antecedentes.');return;
+  }
+  hideError('error1');
+  document.getElementById('val-block').classList.remove('visible');
+  document.getElementById('output1-block').classList.remove('visible');
+  const loading=document.getElementById('loading1');
+  const loadingText=document.getElementById('loading1-text');
+  const btn=document.querySelector('#step1 .btn-primary');
+  btn.disabled=true;
+  try{
+    loading.classList.add('visible');
+    loadingText.textContent='Extrayendo datos...';
+    const parts=[];
+
+    if(plantillaFile){
+      const pc=await plantillaToContent();
+      if(pc)parts.push(pc);
+    }
+    for(const file of uploadedFiles){
+      const b64=await fileToBase64(file);
+      parts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}});
+    }
+    const textHint = parts.length>0&&!clientData?'Extraé todos los datos desde los documentos adjuntos.':clientData;
+    parts.push({type:'text',text:EXTRACTION_PROMPT+(textHint||'')});
+    const messages=[{role:'user',content:parts}];
+
+    extractedData=await callClaude(messages,2000);
+    document.getElementById('output1-content').textContent=extractedData;
+
+    loadingText.textContent='Validando datos...';
+    const valRaw=await callClaude([{role:'user',content:VALIDATION_PROMPT+extractedData}],1000);
+    let valResult={errores:[],advertencias:[]};
+    try{const clean=valRaw.replace(/```json|```/g,'').trim();valResult=JSON.parse(clean);}catch(e){}
+    renderValidation(valResult);
+    document.getElementById('val-block').classList.add('visible');
+    document.getElementById('output1-block').classList.add('visible');
+  }catch(e){showError('error1',e.message);}
+  finally{loading.classList.remove('visible');btn.disabled=false;}
+}
+
+function renderValidation(v){
+  const panel=document.getElementById('val-panel');
+  const errores=v.errores||[];const advertencias=v.advertencias||[];
+  if(errores.length===0&&advertencias.length===0){
+    panel.innerHTML=`<div class="val-header val-header-ok">✅ Sin problemas detectados — podés continuar.</div>`;return;
+  }
+  const hc=errores.length>0?'val-header-issues':'val-header-warns';
+  const ht=errores.length>0?`${errores.length} error${errores.length>1?'es':''} detectados`:`${advertencias.length} advertencia${advertencias.length>1?'s':''}`;
+  let items='';
+  errores.forEach(e=>{items+=`<div class="val-item"><span class="val-icon">❌</span><span>${e}</span></div>`;});
+  advertencias.forEach(a=>{items+=`<div class="val-item"><span class="val-icon">⚠️</span><span>${a}</span></div>`;});
+  panel.innerHTML=`<div class="val-header ${hc}">${errores.length>0?'❌':'⚠️'} ${ht}</div><div class="val-body">${items}</div>`;
+}
+
+// ─── Step 2 ───────────────────────────────────────────────────────
+function goToStep2(){setStep(2);renderClauses();}
+
+function renderClauses(){
+  const list=document.getElementById('clausesList');
+  list.innerHTML=CLAUSES.map(c=>`
+    <div class="clause-block">
+      <div class="clause-header" onclick="toggleClause('${c.id}')">
+        <span class="clause-title">${c.title}</span>
+        <span class="clause-toggle" id="toggle-${c.id}">▼</span>
+      </div>
+      <div class="clause-body collapsed" id="body-${c.id}">
+        <span class="clause-label-small">Texto adicional (opcional):</span>
+        <textarea class="clause-extra" id="extra-${c.id}" placeholder="Agregá texto extra para esta cláusula..."></textarea>
+      </div>
+    </div>`).join('');
+  renderNewClauses();
+}
+
+function toggleClause(id){
+  const body=document.getElementById('body-'+id);
+  const tog=document.getElementById('toggle-'+id);
+  body.classList.toggle('collapsed');
+  tog.textContent=body.classList.contains('collapsed')?'▼':'▲';
+}
+
+function addNewClause(){
+  clauseCounter++;
+  newClauses.push({id:'new-'+clauseCounter,title:'',content:''});
+  renderNewClauses();
+  setTimeout(()=>{const inp=document.getElementById('title-new-'+clauseCounter);if(inp)inp.focus();},100);
+}
+
+function removeNewClause(id){newClauses=newClauses.filter(c=>c.id!==id);renderNewClauses();}
+
+function renderNewClauses(){
+  document.querySelectorAll('.new-clause-block').forEach(el=>el.remove());
+  const list=document.getElementById('clausesList');
+  newClauses.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='new-clause-block';div.id='newblock-'+c.id;
+    div.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:.5px">Nueva cláusula</span>
+      <button class="remove-clause-btn" onclick="removeNewClause('${c.id}')">✕ Quitar</button></div>
+      <input type="text" class="new-clause-title-input" id="title-${c.id}" placeholder="Título de la cláusula">
+      <textarea class="clause-extra" id="content-${c.id}" placeholder="Redactá el texto..."></textarea>`;
+    list.appendChild(div);
+  });
+}
+
+function collectClauseData(){
+  const extras={};
+  CLAUSES.forEach(c=>{const v=document.getElementById('extra-'+c.id);extras[c.key]=v?v.value.trim():'';});
+  const newItems=newClauses.map(c=>({
+    title:(document.getElementById('title-'+c.id)||{}).value||'',
+    content:(document.getElementById('content-'+c.id)||{}).value||''
+  })).filter(c=>c.title||c.content);
+  return{extras,newItems};
+}
+
+// ─── Step 3 ───────────────────────────────────────────────────────
+async function goToStep3(){
+  setStep(3);
+  const editor=document.getElementById('contractEditor');
+  editor.value='Generando contrato...';
+  const{extras,newItems}=collectClauseData();
+  let extraText='';
+  if(Object.values(extras).some(v=>v)){
+    extraText+='\n\nTEXTO ADICIONAL POR CLÁUSULA:\n';
+    CLAUSES.forEach(c=>{if(extras[c.key])extraText+=`\n${c.title}:\n${extras[c.key]}\n`;});
+  }
+  if(newItems.length>0){
+    extraText+='\n\nCLÁUSULAS ADICIONALES (agregalas al final numerando a continuación):\n';
+    newItems.forEach(item=>{extraText+=`\nTítulo: ${item.title}\nTexto: ${item.content}\n`;});
+  }
+  try{
+    const contract=await callClaude([{role:'user',content:CONTRACT_PROMPT+extractedData+extraText}],3000);
+    editor.value=contract+buildSignatureBlock(extractedData);
+  }catch(e){editor.value='Error al generar el contrato. Volvé al paso anterior e intentá de nuevo.';}
+}
+
+function buildSignatureBlock(data){
+  const cedenteName=extractFieldSimple(data,'Nombre completo','CEDENTE')||'[NOMBRE CEDENTE]';
+  const cedenteDni=extractFieldSimple(data,'DNI','CEDENTE')||'[DNI CEDENTE]';
+  const cesionarioName=extractFieldSimple(data,'Nombre completo','CESIONARIO')||'[NOMBRE CESIONARIO]';
+  const cesionarioDni=extractFieldSimple(data,'DNI','CESIONARIO')||'[DNI CESIONARIO]';
+  const cesionarioMail=extractFieldSimple(data,'Mail','CESIONARIO')||'[MAIL CESIONARIO]';
+  const conyugeAdquirio=extractRaw(data,'¿Estaba casado/a cuando adquirió el bien?')||'';
+  const conyugeName=extractRaw(data,'Nombre completo del cónyuge actual')||'[NOMBRE CÓNYUGE]';
+  const conyugeDni=extractRaw(data,'DNI del cónyuge actual')||'[DNI CÓNYUGE]';
+  let block=`\n\n─────────────────────────────────────────────────────\n\nFIRMAS\n\n─────────────────────────────────────────────────────\n\nCESIONARIO/A\n\nFirma: ___________________________\n\nAclaración: ${cesionarioName}\n\nD.N.I.: ${cesionarioDni}\n\nMail: ${cesionarioMail}\n\n─────────────────────────────────────────────────────\n\nCEDENTE/A\n\nFirma: ___________________________\n\nAclaración: ${cedenteName}\n\nD.N.I.: ${cedenteDni}`;
+  if(conyugeAdquirio.toUpperCase().includes('SÍ')||conyugeAdquirio.toUpperCase().includes('SI')){
+    block+=`\n\n─────────────────────────────────────────────────────\n\nCÓNYUGE CEDENTE — ASENTIMIENTO CONYUGAL\n\nFirma: ___________________________\n\nAclaración: ${conyugeName}\n\nD.N.I.: ${conyugeDni}`;
+  }
+  return block;
+}
+
+function extractFieldSimple(text,fieldName,section){
+  const lines=text.split('\n');let inSec=false;
+  for(const line of lines){
+    if(line.toUpperCase().includes(section.toUpperCase())&&(line.includes('CEDENTE')||line.includes('CESIONARIO'))){inSec=true;}
+    if(inSec&&line.includes('- '+fieldName+':')){
+      const val=line.split(':').slice(1).join(':').trim();
+      return(val==='NO INFORMADO'||val==='')?null:val;
+    }
+    if(inSec&&line.startsWith('Datos del')&&!line.toUpperCase().includes(section.toUpperCase())){inSec=false;}
+  }
+  return null;
+}
+
+function extractRaw(text,fieldName){
+  const regex=new RegExp(`- ${fieldName}[^:]*:\\s*(.+)`,'i');
+  const match=text.match(regex);
+  if(!match)return null;
+  const val=match[1].trim();
+  return(val==='NO INFORMADO'||val==='')?null:val;
+}
+
+// ─── Download DOCX ────────────────────────────────────────────────
+function downloadDocx(){
+  const text=document.getElementById('contractEditor').value;
+  if(!text||text==='Generando contrato...')return;
+  const{Document,Packer,Paragraph,TextRun,AlignmentType}=docx;
+  const lines=text.split('\n');
+  const children=lines.map(line=>{
+    const t=line.trim();
+    const isBold=/^(CONTRATO DE|MANZANA|PRIMERO:|SEGUNDO:|TERCERO:|CUARTO:|QUINTO:|SEXTO:|SÉPTIMO:|OCTAVO:|NOVENO:|DÉCIMO:|FIRMAS|CESIONARIO\/A|CEDENTE\/A|CÓNYUGE|─+)/.test(t);
+    const isCentered=/^(CONTRATO DE|MANZANA|FIRMAS|─+)/.test(t);
+    return new Paragraph({
+      alignment:isCentered?AlignmentType.CENTER:AlignmentType.JUSTIFIED,
+      spacing:{line:360,lineRule:'auto',before:isBold&&t!==''?120:0,after:t===''?0:60},
+      children:[new TextRun({text:line,bold:isBold,size:24,font:'Arial Narrow'})]
+    });
+  });
+  const doc=new Document({sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1440,right:1440,bottom:1440,left:1700}}},children}]});
+  Packer.toBlob(doc).then(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='contrato_cesion.docx';a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+// ─── Navigation ───────────────────────────────────────────────────
+function setStep(n){
+  ['step1','step2','step3'].forEach((id,i)=>{document.getElementById(id).style.display=(i+1===n)?'block':'none';});
+  ['si1','si2','si3'].forEach((id,i)=>{
+    const el=document.getElementById(id);el.classList.remove('active','done');
+    if(i+1<n)el.classList.add('done');else if(i+1===n)el.classList.add('active');
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goBackStep1(){setStep(1);}
+function goBackStep2(){setStep(2);}
+
+function switchMainTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const stepsDiv=document.getElementById('steps-bar');
+  const step1=document.getElementById('step1');
+  const step2=document.getElementById('step2');
+  const step3=document.getElementById('step3');
+  const firmasPanel=document.getElementById('firmas-panel');
+  if(tab==='cesion'){
+    stepsDiv.style.display='flex';
+    step1.style.display='';step2.style.display='none';step3.style.display='none';
+    firmasPanel.style.display='none';
+  }else if(tab==='firmas'){
+    stepsDiv.style.display='none';
+    step1.style.display='none';step2.style.display='none';step3.style.display='none';
+    firmasPanel.style.display='block';
+    renderFirmas();
+  }
+}
+
+// ─── Firmas ───────────────────────────────────────────────────────
+function loadFirmas(){try{return JSON.parse(localStorage.getItem('edisur_firmas')||'[]');}catch(e){return[];}}
+function saveFirmas(f){try{localStorage.setItem('edisur_firmas',JSON.stringify(f));}catch(e){}}
+
+function addFirma(){
+  const emp=document.getElementById('f-emprendimiento').value.trim();
+  const manzana=document.getElementById('f-manzana').value.trim();
+  const lote=document.getElementById('f-lote').value.trim();
+  const fecha=document.getElementById('f-fecha').value;
+  const cedente=document.getElementById('f-cedente').value.trim();
+  const cesionario=document.getElementById('f-cesionario').value.trim();
+  const precioServ=document.getElementById('f-precio-serv').value.trim();
+  const precioCert=document.getElementById('f-precio-cert').value.trim();
+  const escribano=document.getElementById('f-escribano').value.trim();
+  const obs=document.getElementById('f-obs').value.trim();
+  if(!emp||!manzana||!lote||!fecha||!cedente||!cesionario){alert('Completá los campos obligatorios.');return;}
+  const firmas=loadFirmas();
+  firmas.push({id:Date.now(),fecha,emprendimiento:emp,manzana,lote,cedente,cesionario,precioServ,precioCert,escribano,obs});
+  saveFirmas(firmas);
+  ['f-emprendimiento','f-manzana','f-lote','f-fecha','f-cedente','f-cesionario','f-precio-serv','f-precio-cert','f-escribano','f-obs'].forEach(id=>{document.getElementById(id).value='';});
+  const msg=document.getElementById('firmas-success');msg.classList.add('visible');
+  setTimeout(()=>msg.classList.remove('visible'),2500);
+  populateAnioFilter();renderFirmas();
+}
+
+function deleteFirma(id){
+  if(!confirm('¿Eliminás esta firma del registro?'))return;
+  saveFirmas(loadFirmas().filter(f=>f.id!==id));renderFirmas();
+}
+
+function populateAnioFilter(){
+  const firmas=loadFirmas();
+  const anios=[...new Set(firmas.map(f=>f.fecha?f.fecha.slice(0,4):''))].filter(Boolean).sort((a,b)=>b-a);
+  const sel=document.getElementById('filter-anio');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todos</option>'+anios.map(a=>`<option value="${a}" ${a===cur?'selected':''}>${a}</option>`).join('');
+}
+
+function clearFilters(){
+  document.getElementById('filter-emp').value='';
+  document.getElementById('filter-mes').value='';
+  document.getElementById('filter-anio').value='';
+  renderFirmas();
+}
+
+function renderFirmas(){
+  populateAnioFilter();
+  const firmas=loadFirmas();
+  const tbody=document.getElementById('firmas-tbody');
+  const count=document.getElementById('firmas-count');
+  const empF=(document.getElementById('filter-emp')||{}).value?.toLowerCase()||'';
+  const mesF=(document.getElementById('filter-mes')||{}).value||'';
+  const anioF=(document.getElementById('filter-anio')||{}).value||'';
+  let filtered=[...firmas].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(empF)filtered=filtered.filter(f=>f.emprendimiento.toLowerCase().includes(empF));
+  if(mesF)filtered=filtered.filter(f=>f.fecha&&f.fecha.slice(5,7)===mesF);
+  if(anioF)filtered=filtered.filter(f=>f.fecha&&f.fecha.slice(0,4)===anioF);
+  const total=firmas.length,showing=filtered.length;
+  count.textContent=total===0?'Sin firmas registradas aún.':showing===total?`${total} firma${total>1?'s':''} registrada${total>1?'s':''}:`:`Mostrando ${showing} de ${total} firmas`;
+  if(total===0){tbody.innerHTML=`<tr><td colspan="12" class="empty-state">No hay firmas registradas. Completá el formulario para agregar la primera.</td></tr>`;return;}
+  if(showing===0){tbody.innerHTML=`<tr><td colspan="12" class="empty-state">Ninguna firma coincide con los filtros.</td></tr>`;return;}
+  tbody.innerHTML=filtered.map((f,i)=>`<tr>
+    <td>${showing-i}</td><td>${formatDate(f.fecha)}</td><td>${esc(f.emprendimiento)}</td>
+    <td>${esc(f.manzana)}</td><td>${esc(f.lote)}</td><td>${esc(f.cedente)}</td>
+    <td>${esc(f.cesionario)}</td><td>${esc(f.precioServ||'—')}</td>
+    <td>${esc(f.precioCert||'—')}</td><td>${esc(f.escribano||'—')}</td>
+    <td class="td-obs" title="${esc(f.obs||'')}">${esc(f.obs||'—')}</td>
+    <td><button class="btn-del" onclick="deleteFirma(${f.id})">🗑</button></td>
+  </tr>`).join('');
+}
+
+function exportExcel(){
+  const firmas=loadFirmas();
+  if(firmas.length===0){alert('No hay firmas para exportar.');return;}
+  const sorted=[...firmas].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const rows=[
+    ['#','Fecha','Emprendimiento','Manzana','Lote','Cedente','Cesionario','Precio servicio','Precio certif. firmas','Escribano','Observaciones'],
+    ...sorted.map((f,i)=>[sorted.length-i,formatDate(f.fecha),f.emprendimiento,f.manzana,f.lote,f.cedente,f.cesionario,f.precioServ||'',f.precioCert||'',f.escribano||'',f.obs||'']),
+    [],
+    ['TOTALES POR EMPRENDIMIENTO','','','','','','','','','',''],
+    ['Emprendimiento','Cantidad de firmas','','','','','','','','',''],
+  ];
+  const byEmp={};firmas.forEach(f=>{byEmp[f.emprendimiento]=(byEmp[f.emprendimiento]||0)+1;});
+  Object.entries(byEmp).sort((a,b)=>b[1]-a[1]).forEach(([emp,qty])=>rows.push([emp,qty,'','','','','','','','','']));
+  rows.push([]);
+  rows.push(['TOTALES POR MES','','','','','','','','','','']);
+  rows.push(['Mes','Cantidad de firmas','','','','','','','','','']);
+  const MESES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const byMes={};firmas.forEach(f=>{if(!f.fecha)return;const k=f.fecha.slice(0,7);byMes[k]=(byMes[k]||0)+1;});
+  Object.entries(byMes).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([ym,qty])=>{
+    const[y,m]=ym.split('-');rows.push([`${MESES[parseInt(m)]} ${y}`,qty,'','','','','','','','','']);
+  });
+  const sep=';';
+  const csvRows=rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(sep));
+  csvRows.unshift('sep=;');
+  const csv=csvRows.join('\n');
+  const BOM='\uFEFF';
+  const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href=url;a.download=`firmas_cesiones_${today}.csv`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Utilities ────────────────────────────────────────────────────
+function copyContract(){
+  navigator.clipboard.writeText(document.getElementById('contractEditor').value).then(()=>{
+    const fb=document.getElementById('copy2-feedback');fb.textContent='✓ Copiado';
+    setTimeout(()=>{fb.textContent='';},2500);
+  });
+}
+function copyOutput(cid,fid){
+  navigator.clipboard.writeText(document.getElementById(cid).textContent).then(()=>{
+    const fb=document.getElementById(fid);fb.textContent='✓ Copiado';
+    setTimeout(()=>{fb.textContent='';},2500);
+  });
+}
+function showError(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('visible');}
+function hideError(id){document.getElementById(id).classList.remove('visible');}
+function formatDate(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+function esc(str){return(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function resetAll(){
+  document.getElementById('clientData').value='';
+  document.getElementById('output1-content').textContent='';
+  document.getElementById('output1-block').classList.remove('visible');
+  document.getElementById('val-block').classList.remove('visible');
+  hideError('error1');
+  uploadedFiles.length=0;renderFileList();
+  plantillaFile=null;renderPlantillaFile();
+  newClauses=[];clauseCounter=0;extractedData='';
+  setStep(1);
+}
+</script>
+</body>
+</html>
